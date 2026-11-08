@@ -222,6 +222,21 @@ public class BMesh
         }
 
         /**
+         * Tells whether a face uses this edge as a side.
+         */
+        public bool ContainsFace(Face f)
+        {
+            if (this.loop == null) return false;
+            Loop it = this.loop;
+            do
+            {
+                if (it.face == f) return true;
+                it = it.radial_next;
+            } while (it != this.loop);
+            return false;
+        }
+
+        /**
          * Return true if this edge is on the boundary (has only 1 adjacent face).
          */
         public bool IsOnBoundary()

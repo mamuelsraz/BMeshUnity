@@ -225,7 +225,7 @@ public class BMeshOperators
      *        faster but there is a risk for overshooting.
      * @param uniformLength whether the size of the quads must be uniformized.
      */
-    public static void SquarifyQuads(BMesh mesh, float rate = 1.0f, bool uniformLength = false)
+    public static void SquarifyQuads(BMesh mesh, float rate = 1.0f, bool uniformLength = false, bool ignoreBoundary = false)
     {
         float avg = 0;
         if (uniformLength)
@@ -239,6 +239,9 @@ public class BMeshOperators
         int i = 0;
         foreach (Vertex v in mesh.vertices)
         {
+            if (ignoreBoundary && v.IsOnBoundary())
+                continue;
+
             if (mesh.HasVertexAttribute("restpos"))
             {
                 if (mesh.HasVertexAttribute("weight"))
@@ -338,6 +341,9 @@ public class BMeshOperators
         i = 0;
         foreach (Vertex v in mesh.vertices)
         {
+            if (ignoreBoundary && v.IsOnBoundary())
+                continue;
+
             if (weights[i] > 0)
             {
                 v.point += pointUpdates[i] * (rate / weights[i]);
@@ -382,6 +388,124 @@ public class BMeshOperators
                 ++j;
             }
             mesh.AddFace(newNeighbors);
+        }
+    }
+
+    #endregion
+
+    ///////////////////////////////////////////////////////////////////////////
+    #region [DissolveEdges]
+
+    /**
+     * Remove edges and merge their two adjacent faces into one. Edges that do
+     * not have exactly two faces with the same winding are skipped.
+     * Vertices left without edges are removed.
+     * Face attributes are copied from the edge's first face.
+     * Returns the merged faces.
+     */
+    public static List<Face> DissolveEdges(BMesh mesh, List<Edge> edges)
+    {
+        var resultFaces = new List<Face>();
+        foreach (Edge e in new List<Edge>(edges)) // copy because mesh.edges changes during iterations
+        {
+            if (e.loop == null) continue;
+            Face f1 = e.loop.face;
+            Face f2 = e.loop.radial_next.face;
+
+            Face merged = DissolveEdge(mesh, e);
+            if (merged == null) continue;
+
+            resultFaces.Remove(f1);
+            resultFaces.Remove(f2);
+            resultFaces.Add(merged);
+        }
+        return resultFaces;
+    }
+
+    /**
+     * Merge the two faces of edge e. Returns null if the edge is skipped.
+     */
+    public static Face DissolveEdge(BMesh mesh, Edge e)
+    {
+        Loop l1 = e.loop;
+        if (l1 == null) return null;
+        Loop l2 = l1.radial_next;
+        if (l2 == l1 || l2.radial_next != l1) return null;
+        Face f1 = l1.face;
+        Face f2 = l2.face;
+        if (f1 == f2) return null;
+        if (l1.vert == l2.vert) return null; // opposite winding
+
+        // Loops on edges not shared by f1 and f2 form the merged face
+        var sharedEdges = new HashSet<Edge>();
+        var outline = new Dictionary<Vertex, Loop>();
+        foreach (Face f in new Face[] { f1, f2 })
+        {
+            Face other = f == f1 ? f2 : f1;
+            Loop it = f.loop;
+            do
+            {
+                if (it.edge.ContainsFace(other))
+                {
+                    Loop a = it.edge.loop;
+                    Loop b = a.radial_next;
+                    if (b.radial_next != a || a.vert == b.vert) return null;
+                    sharedEdges.Add(it.edge);
+                }
+                else
+                {
+                    if (outline.ContainsKey(it.vert)) return null;
+                    outline[it.vert] = it;
+                }
+                it = it.next;
+            } while (it != f.loop);
+        }
+        if (outline.Count < 3) return null;
+
+        // Chain loops into the merged face's outline
+        Loop start = null;
+        foreach (Loop l in outline.Values) { start = l; break; }
+        var corners = new List<Loop>();
+        Loop cur = start;
+        do
+        {
+            corners.Add(cur);
+            if (!outline.TryGetValue(cur.next.vert, out cur)) return null;
+        } while (cur != start && corners.Count <= outline.Count);
+        if (cur != start || corners.Count != outline.Count) return null; // merged face would have a hole
+
+        var faceAttributes = f1.attributes;
+        mesh.RemoveFace(f1);
+        mesh.RemoveFace(f2);
+        foreach (Edge shared in sharedEdges)
+        {
+            Vertex v1 = shared.vert1;
+            Vertex v2 = shared.vert2;
+            mesh.RemoveEdge(shared);
+            if (v1.edge == null) mesh.RemoveVertex(v1);
+            if (v2.edge == null) mesh.RemoveVertex(v2);
+        }
+
+        var verts = new Vertex[corners.Count];
+        for (int i = 0; i < corners.Count; ++i) verts[i] = corners[i].vert;
+        Face merged = mesh.AddFace(verts);
+
+        CopyAttributes(faceAttributes, merged.attributes);
+        Loop newLoop = merged.Loop(verts[0]);
+        foreach (Loop corner in corners)
+        {
+            CopyAttributes(corner.attributes, newLoop.attributes);
+            newLoop = newLoop.next;
+        }
+        return merged;
+    }
+
+    static void CopyAttributes(Dictionary<string, AttributeValue> source, Dictionary<string, AttributeValue> destination)
+    {
+        if (source == null || destination == null) return;
+        foreach (var pair in source)
+        {
+            destination[pair.Key] = AttributeValue.Copy(pair.Value);
         }
     }
 
