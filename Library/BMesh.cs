@@ -142,6 +142,23 @@ public class BMesh
             return edges;
         }
 
+        /*
+         * Return true if this vertex lies on the boundary of the mesh.
+         */
+        public bool IsOnBoundary()
+        {
+            if (this.edge == null)
+                return false;
+            Edge it = this.edge;
+            do
+            {
+                if (it.IsOnBoundary())
+                    return true;
+                it = it.Next(this);
+            } while (it != edge);
+            return false;
+        }
+
         /**
          * Return all faces that use this vertex as a corner.
          */
@@ -202,6 +219,14 @@ public class BMesh
         public bool ContainsVertex(Vertex v)
         {
             return v == vert1 || v == vert2;
+        }
+
+        /**
+         * Return true if this edge is on the boundary (has only 1 adjacent face).
+         */
+        public bool IsOnBoundary()
+        {
+            return this.loop != null && this.loop.radial_next == this.loop;
         }
 
         /**
@@ -749,15 +774,15 @@ public class BMesh
             switch (baseType)
             {
                 case AttributeBaseType.Int:
-                {
-                    var valueAsInt = value as IntAttributeValue;
-                    return valueAsInt != null && valueAsInt.data.Length == dimensions;
-                }
+                    {
+                        var valueAsInt = value as IntAttributeValue;
+                        return valueAsInt != null && valueAsInt.data.Length == dimensions;
+                    }
                 case AttributeBaseType.Float:
-                {
-                    var valueAsFloat = value as FloatAttributeValue;
-                    return valueAsFloat != null && valueAsFloat.data.Length == dimensions;
-                }
+                    {
+                        var valueAsFloat = value as FloatAttributeValue;
+                        return valueAsFloat != null && valueAsFloat.data.Length == dimensions;
+                    }
                 default:
                     Debug.Assert(false);
                     return false;
