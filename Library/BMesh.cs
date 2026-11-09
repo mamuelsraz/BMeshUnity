@@ -404,6 +404,25 @@ public class BMesh
             }
             this.edge = e;
         }
+
+        /**
+         * Index of this loop within its face, counting next steps from face.loop.
+         * Matches the order of face.NeighborVertices() and face.NeighborEdges().
+         * Returns -1 if the loop has no face.
+         */
+        public int IndexInFace()
+        {
+            if (face == null || face.loop == null) return -1;
+            int i = 0;
+            Loop it = face.loop;
+            do
+            {
+                if (it == this) return i;
+                it = it.next;
+                i++;
+            } while (it != face.loop);
+            return -1;
+        }
     }
 
     /**
