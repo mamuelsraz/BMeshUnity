@@ -25,25 +25,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using static BMesh;
 
-/**
- * This file is similarily to BMeshOperators a bank of operators that can be
- * applied to BMesh objects. It follows the same rules.
- */
+/// <summary>
+/// This file is similarily to BMeshOperators a bank of operators that can be
+/// applied to BMesh objects. It follows the same rules.
+/// </summary>
 public class BMeshUnity
 {
     ///////////////////////////////////////////////////////////////////////////
     #region [SetInMeshFilter]
        
-    /**
-     * Convert a BMesh into a Unity Mesh and set it in the provided MeshFilter
-     * WARNING: Only works with tri or quad meshes!
-     * read attributes uv, uv2 from vertices and materialId from faces.
-     * 
-     * NB: UVs are read from vertices, because in a Unity mesh when two face
-     * corners have different UVs, they are different vertices. If you worked
-     * with UVs as Loop attributes, you must first split points and migrate UVs
-     * to vertex attributes.
-     */
+    /// <summary>
+    /// Convert a BMesh into a Unity Mesh and set it in the provided MeshFilter
+    /// WARNING: Only works with tri or quad meshes!
+    /// read attributes uv, uv2 from vertices and materialId from faces.
+    ///
+    /// NB: UVs are read from vertices, because in a Unity mesh when two face
+    /// corners have different UVs, they are different vertices. If you worked
+    /// with UVs as Loop attributes, you must first split points and migrate UVs
+    /// to vertex attributes.
+    /// </summary>
     public static void SetInMeshFilter(BMesh mesh, MeshFilter mf)
     {
         // Points
@@ -175,11 +175,11 @@ public class BMeshUnity
     ///////////////////////////////////////////////////////////////////////////
     #region [Merge]
 
-    /**
-     * Merge a Unity Mesh into a BMesh. Can be used with an empty BMesh to
-     * create a BMesh from a Unity Mesh
-     * TODO: Add support for uvs etc.
-     */
+    /// <summary>
+    /// Merge a Unity Mesh into a BMesh. Can be used with an empty BMesh to
+    /// create a BMesh from a Unity Mesh
+    /// TODO: Add support for uvs etc.
+    /// </summary>
     public static void Merge(BMesh mesh, Mesh unityMesh, bool flipFaces = false)
     {
         Vector3[] unityVertices = unityMesh.vertices;
@@ -245,12 +245,12 @@ public class BMeshUnity
     ///////////////////////////////////////////////////////////////////////////
     #region [DrawGizmos]
 
-    /**
-     * Draw details about the BMesh structure un the viewport.
-     * To be used inside of OnDrawGizmozs() in a MonoBehavior script.
-     * You'll most likely need to add beforehand:
-     *     Gizmos.matrix = transform.localToWorldMatrix
-     */
+    /// <summary>
+    /// Draw details about the BMesh structure un the viewport.
+    /// To be used inside of OnDrawGizmozs() in a MonoBehavior script.
+    /// You'll most likely need to add beforehand:
+    ///     Gizmos.matrix = transform.localToWorldMatrix
+    /// </summary>
     public static void DrawGizmos(BMesh mesh)
     {
         Gizmos.color = Color.yellow;

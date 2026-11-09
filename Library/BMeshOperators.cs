@@ -25,32 +25,32 @@ using System.Collections.Generic;
 using UnityEngine;
 using static BMesh;
 
-/**
- * BMesh Operators are static functions manipulating BMesh objects. Their first
- * argument is the input mesh, in which they are performing changes, so it is
- * also the output (changes are "in place"). If there are other inputs, like in
- * Merge, they are not affected by the operation.
- * 
- * Operators are free to override some attributes, their docstring precises the
- * attributes they expect and that they modify. It is the responsibility of
- * calling code to save previous values if they are needed.
- * All operators assume that the provided mesh is not null.
- * 
- * This file is rather limited at this point but intends to become a bank of
- * operators, to which you are more than welcome to contribute.
- * 
- * Unity-related operatiors are in BMeshUnity. UnityEngine is used here only for
- * the Vector struct.
- */
+/// <summary>
+/// BMesh Operators are static functions manipulating BMesh objects. Their first
+/// argument is the input mesh, in which they are performing changes, so it is
+/// also the output (changes are "in place"). If there are other inputs, like in
+/// Merge, they are not affected by the operation.
+///
+/// Operators are free to override some attributes, their docstring precises the
+/// attributes they expect and that they modify. It is the responsibility of
+/// calling code to save previous values if they are needed.
+/// All operators assume that the provided mesh is not null.
+///
+/// This file is rather limited at this point but intends to become a bank of
+/// operators, to which you are more than welcome to contribute.
+///
+/// Unity-related operatiors are in BMeshUnity. UnityEngine is used here only for
+/// the Vector struct.
+/// </summary>
 public class BMeshOperators
 {
     ///////////////////////////////////////////////////////////////////////////
     #region [AttributeLerp]
 
-    /**
-     * Set all attributes in destination vertex to attr[v1] * (1 - t) + attr[v2] * t
-     * Overriding attributes: all in vertex 'destination', none in others.
-     */
+    /// <summary>
+    /// Set all attributes in destination vertex to attr[v1] * (1 - t) + attr[v2] * t
+    /// Overriding attributes: all in vertex 'destination', none in others.
+    /// </summary>
     public static void AttributeLerp(BMesh mesh, Vertex destination, Vertex v1, Vertex v2, float t)
     {
         foreach (var attr in mesh.vertexAttributes)
@@ -98,12 +98,12 @@ public class BMeshOperators
     ///////////////////////////////////////////////////////////////////////////
     #region [Subdivide]
 
-    /**
-     * Subdivide a mesh, without smoothing it, trying to interpolate all
-     * available attributes as much as possible. After subdivision, all faces
-     * are quads.
-     * Overriding attributes: edge's id
-     */
+    /// <summary>
+    /// Subdivide a mesh, without smoothing it, trying to interpolate all
+    /// available attributes as much as possible. After subdivision, all faces
+    /// are quads.
+    /// Overriding attributes: edge's id
+    /// </summary>
     public static void Subdivide(BMesh mesh)
     {
         int i = 0;
@@ -155,10 +155,10 @@ public class BMeshOperators
     ///////////////////////////////////////////////////////////////////////////
     #region [SquarifyQuads}
 
-    /**
-     * Axis local to a quad face where r0, ..., r3 are vectors from the face
-     * center to its vertices.
-     */
+    /// <summary>
+    /// Axis local to a quad face where r0, ..., r3 are vectors from the face
+    /// center to its vertices.
+    /// </summary>
     static Matrix4x4 ComputeLocalAxis(Vector3 r0, Vector3 r1, Vector3 r2, Vector3 r3)
     {
         Vector3 Z = (
@@ -211,20 +211,21 @@ public class BMeshOperators
         return lengthsum / weightsum;
     }
 
-    /**
-     * Try to make quads as square as possible (may be called iteratively).
-     * This is not a very common operation but was developped so I keep it here.
-     * This assumes that the mesh is only made of quads.
-     * Overriding attributes: vertex's id
-     * Optionnaly read vertexattributes:
-     *   - restpos: a Float3 telling which position attracts the vertex
-     *   - weight: a Float telling to which extent the restpos must be
-     *             considered.
-     *   
-     * @param rate speed at which faces are squarified. A higher rate goes
-     *        faster but there is a risk for overshooting.
-     * @param uniformLength whether the size of the quads must be uniformized.
-     */
+    /// <summary>
+    /// Try to make quads as square as possible (may be called iteratively).
+    /// This is not a very common operation but was developped so I keep it here.
+    /// This assumes that the mesh is only made of quads.
+    /// Overriding attributes: vertex's id
+    /// Optionnaly read vertexattributes:
+    ///   - restpos: a Float3 telling which position attracts the vertex
+    ///   - weight: a Float telling to which extent the restpos must be
+    ///             considered.
+    /// </summary>
+    /// <param name="rate">
+    /// speed at which faces are squarified. A higher rate goes
+    /// faster but there is a risk for overshooting.
+    /// </param>
+    /// <param name="uniformLength">whether the size of the quads must be uniformized.</param>
     public static void SquarifyQuads(BMesh mesh, float rate = 1.0f, bool uniformLength = false, bool ignoreBoundary = false)
     {
         float avg = 0;
@@ -357,11 +358,11 @@ public class BMeshOperators
     ///////////////////////////////////////////////////////////////////////////
     #region [Merge}
 
-    /**
-     * Add all vertices/edges/faces from another mesh, and fix attributes if
-     * needed.
-     * Overriding attributes: vertex's id (of the first mesh only)
-     */
+    /// <summary>
+    /// Add all vertices/edges/faces from another mesh, and fix attributes if
+    /// needed.
+    /// Overriding attributes: vertex's id (of the first mesh only)
+    /// </summary>
     public static void Merge(BMesh mesh, BMesh other)
     {
         var newVerts = new Vertex[other.vertices.Count];
@@ -396,13 +397,13 @@ public class BMeshOperators
     ///////////////////////////////////////////////////////////////////////////
     #region [DissolveEdges]
 
-    /**
-     * Remove edges and merge their two adjacent faces into one. Edges that do
-     * not have exactly two faces with the same winding are skipped.
-     * Vertices left without edges are removed.
-     * Face attributes are copied from the edge's first face.
-     * Returns the merged faces.
-     */
+    /// <summary>
+    /// Remove edges and merge their two adjacent faces into one. Edges that do
+    /// not have exactly two faces with the same winding are skipped.
+    /// Vertices left without edges are removed.
+    /// Face attributes are copied from the edge's first face.
+    /// Returns the merged faces.
+    /// </summary>
     public static List<Face> DissolveEdges(BMesh mesh, List<Edge> edges)
     {
         var resultFaces = new List<Face>();
@@ -422,9 +423,9 @@ public class BMeshOperators
         return resultFaces;
     }
 
-    /**
-     * Merge the two faces of edge e. Returns null if the edge is skipped.
-     */
+    /// <summary>
+    /// Merge the two faces of edge e. Returns null if the edge is skipped.
+    /// </summary>
     public static Face DissolveEdge(BMesh mesh, Edge e)
     {
         Loop l1 = e.loop;
@@ -514,11 +515,11 @@ public class BMeshOperators
     ///////////////////////////////////////////////////////////////////////////
     #region [Nearpoint]
 
-    /**
-     * Find the point for which attribute namde 'attrName' is closest to 'value'.
-     * NB: If this was going to be repeated a lot of times, consider building
-     * a KDTree (not included in BMeshOperators yet).
-     */
+    /// <summary>
+    /// Find the point for which attribute namde 'attrName' is closest to 'value'.
+    /// NB: If this was going to be repeated a lot of times, consider building
+    /// a KDTree (not included in BMeshOperators yet).
+    /// </summary>
     public static Vertex Nearpoint(BMesh mesh, AttributeValue value, string attrName)
     {
         if (!mesh.HasVertexAttribute(attrName)) return null;

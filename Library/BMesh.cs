@@ -26,41 +26,41 @@ using System.Data;
 using System.Linq;
 using UnityEngine;
 
-/**
- * Non-manifold boundary representation of a 3D mesh with arbitrary attributes.
- * This structure intends to make procedural mesh creation and arbitrary edits
- * as easy as possible while remaining efficient enough. See other comments
- * along the file to see how to use it.
- * 
- * This file only contains the data structure and basic operations such as
- * adding/removing elements. For more advanced operations, see BMeshOperators.
- * For operations related to Unity, like converting to UnityEngine.Mesh, see
- * the BMeshUnity class.
- * 
- * The basic structure is described in the paper:
- * 
- *     Gueorguieva, Stefka and Marcheix, Davi. 1994. "Non-manifold boundary
- *     representation for solid modeling."
- *     
- * We use the same terminology as Blender's dev documentation:
- *     https://wiki.blender.org/wiki/Source/Modeling/BMesh/Design
- *     
- * Arbitrary attributes can be attached topological entity, namely vertices,
- * edges, loops and faces. If you are used to Houdini's terminology, note that
- * what is called "vertex" here corresponds to Houdini's points, while what
- * Houdini calls "vertex" is close to BMesh's "loops".
- *     
- * NB: The only dependency to Unity is the Vector3 structure, it can easily be
- * made independent.
- * 
- * NB: This class is not totally protected from misuse. We prefered fostering
- * ease of use over safety, so take care when you start feeling that you are
- * not fully understanding what you are doing, you'll likely mess with the
- * structure. For instance, do not add edges directly to the mesh.edges
- * list but use AddEdge, etc.
- * 
- * NB: This file is long, use the #region to fold it conveniently.
- */
+/// <summary>
+/// Non-manifold boundary representation of a 3D mesh with arbitrary attributes.
+/// This structure intends to make procedural mesh creation and arbitrary edits
+/// as easy as possible while remaining efficient enough. See other comments
+/// along the file to see how to use it.
+///
+/// This file only contains the data structure and basic operations such as
+/// adding/removing elements. For more advanced operations, see BMeshOperators.
+/// For operations related to Unity, like converting to UnityEngine.Mesh, see
+/// the BMeshUnity class.
+///
+/// The basic structure is described in the paper:
+///
+///     Gueorguieva, Stefka and Marcheix, Davi. 1994. "Non-manifold boundary
+///     representation for solid modeling."
+///
+/// We use the same terminology as Blender's dev documentation:
+///     https://wiki.blender.org/wiki/Source/Modeling/BMesh/Design
+///
+/// Arbitrary attributes can be attached topological entity, namely vertices,
+/// edges, loops and faces. If you are used to Houdini's terminology, note that
+/// what is called "vertex" here corresponds to Houdini's points, while what
+/// Houdini calls "vertex" is close to BMesh's "loops".
+///
+/// NB: The only dependency to Unity is the Vector3 structure, it can easily be
+/// made independent.
+///
+/// NB: This class is not totally protected from misuse. We prefered fostering
+/// ease of use over safety, so take care when you start feeling that you are
+/// not fully understanding what you are doing, you'll likely mess with the
+/// structure. For instance, do not add edges directly to the mesh.edges
+/// list but use AddEdge, etc.
+///
+/// NB: This file is long, use the #region to fold it conveniently.
+/// </summary>
 public class BMesh
 {
     // Topological entities
@@ -93,7 +93,7 @@ public class BMesh
     ///////////////////////////////////////////////////////////////////////////
     #region [Topology Types]
 
-    /**
+    /*
      * NB: For all topology types, except for members marked as "attribute",
      * all classes only store references to objects allocated by BMesh itself.
      * Variables marked as attributes have no impact on the topological
@@ -103,15 +103,15 @@ public class BMesh
      * to get actually filled unless you explicitely did do.
      */
 
-    /**
-     * A vertex corresponds roughly to a position in space. Many primitives
-     * (edges, faces) can share a given vertex. Several vertices can be located
-     * at the very same position.
-     * It references a chained list of the edges that use it, embeded inside the Edge
-     * structure (see below, and see implementation of NeighborEdges).
-     * The vertex position does not affect topological algorithms, but is used by
-     * commodity functions that help finding the center of an edge or a face.
-     */
+    /// <summary>
+    /// A vertex corresponds roughly to a position in space. Many primitives
+    /// (edges, faces) can share a given vertex. Several vertices can be located
+    /// at the very same position.
+    /// It references a chained list of the edges that use it, embeded inside the Edge
+    /// structure (see below, and see implementation of NeighborEdges).
+    /// The vertex position does not affect topological algorithms, but is used by
+    /// commodity functions that help finding the center of an edge or a face.
+    /// </summary>
     public class Vertex
     {
         public int id; // [attribute]
@@ -124,9 +124,9 @@ public class BMesh
             point = _point;
         }
 
-        /**
-         * List all edges reaching this vertex.
-         */
+        /// <summary>
+        /// List all edges reaching this vertex.
+        /// </summary>
         public List<Edge> NeighborEdges()
         {
             var edges = new List<Edge>();
@@ -159,9 +159,9 @@ public class BMesh
             return false;
         }
 
-        /**
-         * Return all faces that use this vertex as a corner.
-         */
+        /// <summary>
+        /// Return all faces that use this vertex as a corner.
+        /// </summary>
         public List<Face> NeighborFaces()
         {
             var faces = new HashSet<Face>();
@@ -181,26 +181,26 @@ public class BMesh
         }
     }
 
-    /**
-     * An edge links to vertices together, and may or may not be part of a face.
-     * An edge can be shared by several faces.
-     * 
-     * Technical Note: The structure stores a reference to the two vertices.
-     * Although the role of these two vertices is perfectly symmetrical, this
-     * makes the iterations over linked list slightly trickier than expected.
-     * 
-     * The edge is a node of two (double) linked lists at the same time. Let's
-     * recall that a (simply) linked list of Stuff is made of nodes of the form
-     *     Node {
-     *         Stuff value;
-     *         Node next;
-     *     }
-     * Here we provide two "next", depending on whether the vertex that we are
-     * interested in is vertex1 or vertex2. Note that a vertex stored in the
-     * "vertex1" field for one edge might be stored in the "vertex2" of the
-     * next one, so the function Next() is provided to return either next1 or
-     * next2 depending on the vertex of interest.
-     */
+    /// <summary>
+    /// An edge links to vertices together, and may or may not be part of a face.
+    /// An edge can be shared by several faces.
+    ///
+    /// Technical Note: The structure stores a reference to the two vertices.
+    /// Although the role of these two vertices is perfectly symmetrical, this
+    /// makes the iterations over linked list slightly trickier than expected.
+    ///
+    /// The edge is a node of two (double) linked lists at the same time. Let's
+    /// recall that a (simply) linked list of Stuff is made of nodes of the form
+    ///     Node {
+    ///         Stuff value;
+    ///         Node next;
+    ///     }
+    /// Here we provide two "next", depending on whether the vertex that we are
+    /// interested in is vertex1 or vertex2. Note that a vertex stored in the
+    /// "vertex1" field for one edge might be stored in the "vertex2" of the
+    /// next one, so the function Next() is provided to return either next1 or
+    /// next2 depending on the vertex of interest.
+    /// </summary>
     public class Edge
     {
         public int id; // [attribute]
@@ -213,17 +213,17 @@ public class BMesh
         public Edge prev2;
         public Loop loop; // first node of the list of faces that use this edge. Navigate list using radial_next
 
-        /**
-         * Tells whether a vertex is one of the extremities of this edge.
-         */
+        /// <summary>
+        /// Tells whether a vertex is one of the extremities of this edge.
+        /// </summary>
         public bool ContainsVertex(Vertex v)
         {
             return v == vert1 || v == vert2;
         }
 
-        /**
-         * Tells whether a face uses this edge as a side.
-         */
+        /// <summary>
+        /// Tells whether a face uses this edge as a side.
+        /// </summary>
         public bool ContainsFace(Face f)
         {
             if (this.loop == null) return false;
@@ -236,37 +236,37 @@ public class BMesh
             return false;
         }
 
-        /**
-         * Return true if this edge is on the boundary (has only 1 adjacent face).
-         */
+        /// <summary>
+        /// Return true if this edge is on the boundary (has only 1 adjacent face).
+        /// </summary>
         public bool IsOnBoundary()
         {
             return this.loop != null && this.loop.radial_next == this.loop;
         }
 
-        /**
-         * If one gives a vertex of the edge to this function, it returns the
-         * other vertex of the edge. Otherwise, the behavior is undefined.
-         */
+        /// <summary>
+        /// If one gives a vertex of the edge to this function, it returns the
+        /// other vertex of the edge. Otherwise, the behavior is undefined.
+        /// </summary>
         public Vertex OtherVertex(Vertex v)
         {
             Debug.Assert(ContainsVertex(v));
             return v == vert1 ? vert2 : vert1;
         }
 
-        /**
-         * If one gives a vertex of the edge to this function, it returns the
-         * next edge in the linked list of edges that use this vertex.
-         */
+        /// <summary>
+        /// If one gives a vertex of the edge to this function, it returns the
+        /// next edge in the linked list of edges that use this vertex.
+        /// </summary>
         public Edge Next(Vertex v)
         {
             Debug.Assert(ContainsVertex(v));
             return v == vert1 ? next1 : next2;
         }
 
-        /**
-         * This is used when inserting a new Edge in the lists.
-         */
+        /// <summary>
+        /// This is used when inserting a new Edge in the lists.
+        /// </summary>
         public void SetNext(Vertex v, Edge other)
         {
             Debug.Assert(ContainsVertex(v));
@@ -274,18 +274,18 @@ public class BMesh
             else next2 = other;
         }
 
-        /**
-         * Similar to Next() but to go backward in the double-linked list
-         */
+        /// <summary>
+        /// Similar to Next() but to go backward in the double-linked list
+        /// </summary>
         public Edge Prev(Vertex v)
         {
             Debug.Assert(ContainsVertex(v));
             return v == vert1 ? prev1 : prev2;
         }
 
-        /**
-         * Similar to SetNext()
-         */
+        /// <summary>
+        /// Similar to SetNext()
+        /// </summary>
         public void SetPrev(Vertex v, Edge other)
         {
             Debug.Assert(ContainsVertex(v));
@@ -293,9 +293,9 @@ public class BMesh
             else prev2 = other;
         }
 
-        /**
-         * Return all faces that use this edge as a side.
-         */
+        /// <summary>
+        /// Return all faces that use this edge as a side.
+        /// </summary>
         public List<Face> NeighborFaces()
         {
             var faces = new List<Face>();
@@ -311,30 +311,30 @@ public class BMesh
             return faces;
         }
 
-        /**
-         * Compute the barycenter of the edge's vertices
-         */
+        /// <summary>
+        /// Compute the barycenter of the edge's vertices
+        /// </summary>
         public Vector3 Center()
         {
             return (vert1.point + vert2.point) * 0.5f;
         }
     }
 
-    /**
-     * Since a face is basically a list of edges, and the Loop object is a node
-     * of this list, called so because the list must loop.
-     * A loop is associated to one and only one face.
-     * 
-     * A loop can be seen as a list of edges, it also stores a reference to a
-     * vertex for commodity but technically it could be found through the edge.
-     * It may also be interpreted as a "face corner", and is hence where one
-     * typically stores UVs, because one vertex may have different UV
-     * coordinates depending on the face.
-     * 
-     * On top of this, the loop is also used as a node of another linked list,
-     * namely the radial list, that enables iterating over all the faces using
-     * the same edge.
-     */
+    /// <summary>
+    /// Since a face is basically a list of edges, and the Loop object is a node
+    /// of this list, called so because the list must loop.
+    /// A loop is associated to one and only one face.
+    ///
+    /// A loop can be seen as a list of edges, it also stores a reference to a
+    /// vertex for commodity but technically it could be found through the edge.
+    /// It may also be interpreted as a "face corner", and is hence where one
+    /// typically stores UVs, because one vertex may have different UV
+    /// coordinates depending on the face.
+    ///
+    /// On top of this, the loop is also used as a node of another linked list,
+    /// namely the radial list, that enables iterating over all the faces using
+    /// the same edge.
+    /// </summary>
     public class Loop
     {
         public Dictionary<string, AttributeValue> attributes; // [attribute] (extra attributes)
@@ -355,10 +355,10 @@ public class BMesh
             SetFace(f);
         }
 
-        /**
-         * Insert the loop in the linked list of the face.
-         * (Used in constructor)
-         */
+        /// <summary>
+        /// Insert the loop in the linked list of the face.
+        /// (Used in constructor)
+        /// </summary>
         public void SetFace(Face f)
         {
             Debug.Assert(this.face == null);
@@ -380,10 +380,10 @@ public class BMesh
             this.face = f;
         }
 
-        /**
-         * Insert the loop in the radial linked list.
-         * (Used in constructor)
-         */
+        /// <summary>
+        /// Insert the loop in the radial linked list.
+        /// (Used in constructor)
+        /// </summary>
         public void SetEdge(Edge e)
         {
             Debug.Assert(this.edge == null);
@@ -405,11 +405,11 @@ public class BMesh
             this.edge = e;
         }
 
-        /**
-         * Index of this loop within its face, counting next steps from face.loop.
-         * Matches the order of face.NeighborVertices() and face.NeighborEdges().
-         * Returns -1 if the loop has no face.
-         */
+        /// <summary>
+        /// Index of this loop within its face, counting next steps from face.loop.
+        /// Matches the order of face.NeighborVertices() and face.NeighborEdges().
+        /// Returns -1 if the loop has no face.
+        /// </summary>
         public int IndexInFace()
         {
             if (face == null || face.loop == null) return -1;
@@ -425,11 +425,11 @@ public class BMesh
         }
     }
 
-    /**
-     * A face is almost nothing more than a loop. Having a different structure
-     * makes sense only 1. for clarity, because loops are a less intuitive
-     * object and 2. to store face attributes.
-     */
+    /// <summary>
+    /// A face is almost nothing more than a loop. Having a different structure
+    /// makes sense only 1. for clarity, because loops are a less intuitive
+    /// object and 2. to store face attributes.
+    /// </summary>
     public class Face
     {
         public int id; // [attribute]
@@ -437,9 +437,9 @@ public class BMesh
         public int vertcount; // stored for commodity, can be recomputed easily
         public Loop loop; // navigate list using next
 
-        /**
-         * Get the list of vertices used by the face, ordered.
-         */
+        /// <summary>
+        /// Get the list of vertices used by the face, ordered.
+        /// </summary>
         public List<Vertex> NeighborVertices()
         {
             var verts = new List<Vertex>();
@@ -455,10 +455,10 @@ public class BMesh
             return verts;
         }
 
-        /**
-         * Assuming the vertex is part of the face, return the loop such that
-         * loop.vert = v. Return null otherwise.
-         */
+        /// <summary>
+        /// Assuming the vertex is part of the face, return the loop such that
+        /// loop.vert = v. Return null otherwise.
+        /// </summary>
         public Loop Loop(Vertex v)
         {
             if (this.loop != null)
@@ -474,11 +474,11 @@ public class BMesh
             return null;
         }
 
-        /**
-         * Get the list of edges around the face.
-         * It is garrantied to match the order of NeighborVertices(), so that
-         * edge[0] = vert[0]-->vert[1], edge[1] = vert[1]-->vert[2], etc.
-         */
+        /// <summary>
+        /// Get the list of edges around the face.
+        /// It is garrantied to match the order of NeighborVertices(), so that
+        /// edge[0] = vert[0]--&gt;vert[1], edge[1] = vert[1]--&gt;vert[2], etc.
+        /// </summary>
         public List<Edge> NeighborEdges()
         {
             var edges = new List<Edge>();
@@ -494,9 +494,9 @@ public class BMesh
             return edges;
         }
 
-        /**
-         * Compute the barycenter of the face vertices
-         */
+        /// <summary>
+        /// Compute the barycenter of the face vertices
+        /// </summary>
         public Vector3 Center()
         {
             Vector3 p = Vector3.zero;
@@ -514,9 +514,9 @@ public class BMesh
     ///////////////////////////////////////////////////////////////////////////
     #region [Topology Methods]
 
-    /**
-     * Add a new vertex to the mesh.
-     */
+    /// <summary>
+    /// Add a new vertex to the mesh.
+    /// </summary>
     public Vertex AddVertex(Vertex vert)
     {
         EnsureVertexAttributes(vert);
@@ -532,11 +532,11 @@ public class BMesh
         return AddVertex(new Vector3(x, y, z));
     }
 
-    /**
-     * Add a new edge between two vertices. If there is already such edge,
-     * return it without adding a new one.
-     * If the vertices are not part of the mesh, the behavior is undefined.
-     */
+    /// <summary>
+    /// Add a new edge between two vertices. If there is already such edge,
+    /// return it without adding a new one.
+    /// If the vertices are not part of the mesh, the behavior is undefined.
+    /// </summary>
     public Edge AddEdge(Vertex vert1, Vertex vert2)
     {
         Debug.Assert(vert1 != vert2);
@@ -588,12 +588,12 @@ public class BMesh
         return AddEdge(vertices[v1], vertices[v2]);
     }
 
-    /**
-     * Add a new face that connects the array of vertices provided.
-     * The vertices must be part of the mesh, otherwise the behavior is
-     * undefined.
-     * NB: There is no AddLoop, because a loop is an element of a face
-     */
+    /// <summary>
+    /// Add a new face that connects the array of vertices provided.
+    /// The vertices must be part of the mesh, otherwise the behavior is
+    /// undefined.
+    /// NB: There is no AddLoop, because a loop is an element of a face
+    /// </summary>
     public Face AddFace(Vertex[] fVerts)
     {
         if (fVerts.Length == 0) return null;
@@ -653,11 +653,11 @@ public class BMesh
         return AddFace(new Vertex[] { vertices[i0], vertices[i1], vertices[i2], vertices[i3] });
     }
 
-    /**
-     * Return an edge that links vert1 to vert2 in the mesh (an arbitrary one
-     * if there are several such edges, which is possible with this structure).
-     * Return null if there is no edge between vert1 and vert2 in the mesh.
-     */
+    /// <summary>
+    /// Return an edge that links vert1 to vert2 in the mesh (an arbitrary one
+    /// if there are several such edges, which is possible with this structure).
+    /// Return null if there is no edge between vert1 and vert2 in the mesh.
+    /// </summary>
     public Edge FindEdge(Vertex vert1, Vertex vert2)
     {
         Debug.Assert(vert1 != vert2);
@@ -675,11 +675,11 @@ public class BMesh
         return null;
     }
 
-    /**
-     * Remove the provided vertex from the mesh.
-     * Removing a vertex also removes all the edges/loops/faces that use it.
-     * If the vertex was not part of this mesh, the behavior is undefined.
-     */
+    /// <summary>
+    /// Remove the provided vertex from the mesh.
+    /// Removing a vertex also removes all the edges/loops/faces that use it.
+    /// If the vertex was not part of this mesh, the behavior is undefined.
+    /// </summary>
     public void RemoveVertex(Vertex v)
     {
         while (v.edge != null)
@@ -690,11 +690,11 @@ public class BMesh
         vertices.Remove(v);
     }
 
-    /**
-     * Remove the provided edge from the mesh.
-     * Removing an edge also removes all associated loops/faces.
-     * If the edge was not part of this mesh, the behavior is undefined.
-     */
+    /// <summary>
+    /// Remove the provided edge from the mesh.
+    /// Removing an edge also removes all associated loops/faces.
+    /// If the edge was not part of this mesh, the behavior is undefined.
+    /// </summary>
     public void RemoveEdge(Edge e)
     {
         while (e.loop != null)
@@ -716,10 +716,10 @@ public class BMesh
         edges.Remove(e);
     }
 
-    /**
-     * Removing a loop also removes associated face.
-     * used internally only, just RemoveFace(loop.face) outside of here.
-     */
+    /// <summary>
+    /// Removing a loop also removes associated face.
+    /// used internally only, just RemoveFace(loop.face) outside of here.
+    /// </summary>
     void RemoveLoop(Loop l)
     {
         if (l.face != null) // null iff loop is called from RemoveFace
@@ -751,11 +751,11 @@ public class BMesh
         loops.Remove(l);
     }
 
-    /**
-     * Remove the provided face from the mesh.
-     * If the face was not part of this mesh, the behavior is undefined.
-     * (actually almost ensured to be a true mess, but do as it pleases you :D)
-     */
+    /// <summary>
+    /// Remove the provided face from the mesh.
+    /// If the face was not part of this mesh, the behavior is undefined.
+    /// (actually almost ensured to be a true mess, but do as it pleases you :D)
+    /// </summary>
     public void RemoveFace(Face f)
     {
         Loop l = f.loop;
@@ -774,7 +774,7 @@ public class BMesh
     ///////////////////////////////////////////////////////////////////////////
     #region [Attributes Types]
 
-    /**
+    /*
      * Attributes are arbitrary data that can be attached to topologic entities.
      * There are identified by a name and their value is an array of either int
      * or float. This array has theoretically a fixed size but in practice you
@@ -790,18 +790,18 @@ public class BMesh
         Float,
     }
 
-    /**
-     * Attribute type is used when declaring new attributes to be automatically
-     * attached to topological entities, using Add*Attributes() methods.
-     */
+    /// <summary>
+    /// Attribute type is used when declaring new attributes to be automatically
+    /// attached to topological entities, using Add*Attributes() methods.
+    /// </summary>
     public class AttributeType
     {
         public AttributeBaseType baseType;
         public int dimensions;
 
-        /**
-         * Checks whether a given value matches this type.
-         */
+        /// <summary>
+        /// Checks whether a given value matches this type.
+        /// </summary>
         public bool CheckValue(AttributeValue value)
         {
             Debug.Assert(dimensions > 0);
@@ -824,16 +824,16 @@ public class BMesh
         }
     }
 
-    /**
-     * The generic class of values stored in the attribute dictionnary in each
-     * topologic entity. It contains an array of float or int, depending on its
-     * type.
-     */
+    /// <summary>
+    /// The generic class of values stored in the attribute dictionnary in each
+    /// topologic entity. It contains an array of float or int, depending on its
+    /// type.
+    /// </summary>
     public class AttributeValue
     {
-        /**
-         * Deep copy of an attribute value.
-         */
+        /// <summary>
+        /// Deep copy of an attribute value.
+        /// </summary>
         public static AttributeValue Copy(AttributeValue value)
         {
             if (value is IntAttributeValue valueAsInt)
@@ -852,10 +852,10 @@ public class BMesh
             return null;
         }
 
-        /**
-         * Measure the euclidean distance between two attributes, which is set
-         * to infinity if they have different types (int or float / dimension)
-         */
+        /// <summary>
+        /// Measure the euclidean distance between two attributes, which is set
+        /// to infinity if they have different types (int or float / dimension)
+        /// </summary>
         public static float Distance(AttributeValue value1, AttributeValue value2)
         {
             if (value1 is IntAttributeValue value1AsInt)
@@ -875,19 +875,19 @@ public class BMesh
             return float.PositiveInfinity;
         }
 
-        /**
-         * Cast to FloatAttributeValue (return null if it was not actually a
-         * float attribute).
-         */
+        /// <summary>
+        /// Cast to FloatAttributeValue (return null if it was not actually a
+        /// float attribute).
+        /// </summary>
         public FloatAttributeValue asFloat()
         {
             return this as FloatAttributeValue;
         }
 
-        /**
-         * Cast to IntAttributeValue (return null if it was not actually an
-         * integer attribute).
-         */
+        /// <summary>
+        /// Cast to IntAttributeValue (return null if it was not actually an
+        /// integer attribute).
+        /// </summary>
         public IntAttributeValue asInt()
         {
             return this as IntAttributeValue;
@@ -989,11 +989,11 @@ public class BMesh
         }
     }
 
-    /**
-     * Attributes definitions are stored in the mesh to automatically add an
-     * attribute with a default value to all existing and added topological
-     * entities of the target type.
-     */
+    /// <summary>
+    /// Attributes definitions are stored in the mesh to automatically add an
+    /// attribute with a default value to all existing and added topological
+    /// entities of the target type.
+    /// </summary>
     public class AttributeDefinition
     {
         public string name;
@@ -1007,10 +1007,10 @@ public class BMesh
             defaultValue = NullValue();
         }
 
-        /**
-         * Return a null value of the target type
-         * (should arguably be in AttributeType)
-         */
+        /// <summary>
+        /// Return a null value of the target type
+        /// (should arguably be in AttributeType)
+        /// </summary>
         public AttributeValue NullValue()
         {
             //Debug.Assert(type.dimensions > 0);
@@ -1031,18 +1031,18 @@ public class BMesh
     ///////////////////////////////////////////////////////////////////////////
     #region [Vertex Attribute Methods]
 
-    /**
+    /*
      * The same series of method repeats for Vertices, Edges, Loops and Faces.
      * Maybe there's a nice way to factorize, but in the meantime I'll at least
      * factorize the comments, so the following work for all types of
      * topological entities.
      */
 
-    /**
-     * Check whether the mesh as an attribute enforced to any vertices with the
-     * given name. If this is true, one can safely use v.attribtues[attribName]
-     * without checking v.attributes.ContainsKey() first.
-     */
+    /// <summary>
+    /// Check whether the mesh as an attribute enforced to any vertices with the
+    /// given name. If this is true, one can safely use v.attribtues[attribName]
+    /// without checking v.attributes.ContainsKey() first.
+    /// </summary>
     public bool HasVertexAttribute(string attribName)
     {
         foreach (var a in vertexAttributes)
@@ -1060,12 +1060,12 @@ public class BMesh
         return HasVertexAttribute(attrib.name);
     }
 
-    /**
-     * Add a new attribute and return it, so that one can write oneliners like
-     *     AddVertexAttribute("foo", Float, 3).defaultValue = ...
-     * NB: It does not return the attribute from the mesh definition if it
-     * existed already. Maybe this can be considered as a bug, maybe not.
-     */
+    /// <summary>
+    /// Add a new attribute and return it, so that one can write oneliners like
+    ///     AddVertexAttribute("foo", Float, 3).defaultValue = ...
+    /// NB: It does not return the attribute from the mesh definition if it
+    /// existed already. Maybe this can be considered as a bug, maybe not.
+    /// </summary>
     public AttributeDefinition AddVertexAttribute(AttributeDefinition attrib)
     {
         if (HasVertexAttribute(attrib)) return attrib; // !!
@@ -1083,10 +1083,10 @@ public class BMesh
         return AddVertexAttribute(new AttributeDefinition(name, baseType, dimensions));
     }
 
-    /**
-     * Called internally when adding a new vertex to ensure that the vertex has
-     * all required attribute. If not, the default value is used to add it.
-     */
+    /// <summary>
+    /// Called internally when adding a new vertex to ensure that the vertex has
+    /// all required attribute. If not, the default value is used to add it.
+    /// </summary>
     void EnsureVertexAttributes(Vertex v)
     {
         if (v.attributes == null) v.attributes = new Dictionary<string, AttributeValue>();
